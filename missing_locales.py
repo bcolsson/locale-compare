@@ -10,6 +10,7 @@ import sys
 from urllib.parse import quote as urlquote
 from urllib.request import urlopen
 
+
 def retrieve_pontoon_locales(project):
     query = f'{{project(slug:"{project}"){{name,localizations{{locale{{code}}}}}}}}'
     url = f"https://pontoon.mozilla.org/graphql?query={urlquote(query)}"
@@ -21,16 +22,17 @@ def retrieve_pontoon_locales(project):
             sys.exit(f"Project {project} not found in Pontoon.")
 
         locale_list = []
-        for locale in json_data['data']['project']['localizations']:
-            locale_list.append(locale['locale']['code'])
+        for locale in json_data["data"]["project"]["localizations"]:
+            locale_list.append(locale["locale"]["code"])
         locale_list.sort()
 
         return locale_list
     except Exception as e:
         sys.exit(e)
 
+
 def retrieve_github_locales(owner, repo, path):
-    query = f'/repos/{owner}/{repo}/contents/{path}'
+    query = f"/repos/{owner}/{repo}/contents/{path}"
     url = f"https://api.github.com{urlquote(query)}"
 
     ignored_folders = ["templates", "configs"]
@@ -40,12 +42,19 @@ def retrieve_github_locales(owner, repo, path):
         json_data = json.load(response)
 
         # Ignore files, hidden folder, non-locale folders via ignore list
-        locale_list = [e["name"] for e in json_data if e["type"] == "dir" and not e["name"].startswith(".") and e["name"] not in ignored_folders]
+        locale_list = [
+            e["name"]
+            for e in json_data
+            if e["type"] == "dir"
+            and not e["name"].startswith(".")
+            and e["name"] not in ignored_folders
+        ]
         locale_list.sort()
 
         return locale_list
     except Exception as e:
         sys.exit(e)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -87,7 +96,9 @@ def main():
     args = parser.parse_args()
 
     pontoon_locales = retrieve_pontoon_locales(args.pontoon_project)
-    github_locales = retrieve_github_locales(args.github_owner, args.github_repo, args.github_path)
+    github_locales = retrieve_github_locales(
+        args.github_owner, args.github_repo, args.github_path
+    )
 
     output = ["Missing Locales"]
     missing_locales = list(set(github_locales) - set(pontoon_locales))
@@ -100,6 +111,6 @@ def main():
             f.write("\n".join(output))
             print("Missing locales saved to output.csv")
 
+
 if __name__ == "__main__":
     main()
-
